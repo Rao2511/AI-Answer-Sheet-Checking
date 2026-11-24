@@ -3,15 +3,15 @@ import streamlit as st
 from core.theme_manager import get_theme
 
 
-# Navigation items matching upGrad School of Technology Admin Portal layout
+# Navigation items for Answer Sheet Grader
 NAV_ITEMS = [
-    ("⊞", "Overview", "upload"),
-    ("📋", "Rubric Scheme", "rubric_review"),
+    ("📤", "Upload Documents", "upload"),
+    ("📋", "Rubric Review", "rubric_review"),
     ("⚡", "Auto-Grade Exam", "grade"),
     ("🔍", "Manual Review", "review"),
     ("📑", "Student Reports", "student_reports"),
     ("📊", "Class Analytics", "dashboard"),
-    ("📥", "Export Hub", "downloads"),
+    ("📥", "Export & Downloads", "downloads"),
 ]
 
 
@@ -29,7 +29,7 @@ def get_upgrad_logo_base64() -> str:
 
 
 def render_sidebar():
-    """Renders the upGrad School of Technology Admin Portal sidebar."""
+    """Renders the upGrad School of Technology Answer Sheet Grader sidebar."""
     theme = get_theme()
 
     with st.sidebar:
@@ -39,24 +39,16 @@ def render_sidebar():
         if logo_b64:
             st.markdown(
                 f"""
-                <div style="padding: 10px 4px 12px 4px; text-align: center;">
+                <div style="padding: 12px 4px 14px 4px; text-align: center;">
                     <img src="data:image/jpeg;base64,{logo_b64}" 
                          style="width: 175px; max-width: 100%; height: auto; display: block; margin: 0 auto;" 
                          alt="upGrad School of Technology" />
                     <div style="
-                        font-size: 0.68rem; 
-                        color: #94a3b8; 
-                        font-weight: 700; 
-                        letter-spacing: 0.16em; 
-                        text-transform: uppercase; 
-                        margin-top: 10px;
-                    ">ADMIN PORTAL</div>
-                    <div style="
-                        font-size: 0.85rem; 
+                        font-size: 0.96rem; 
                         color: #0f172a; 
                         font-weight: 800; 
                         letter-spacing: -0.02em; 
-                        margin-top: 2px;
+                        margin-top: 10px;
                     ">Answer Sheet Grader</div>
                 </div>
                 """,
@@ -83,8 +75,8 @@ def render_sidebar():
                             <div style="font-size: 1.1rem; font-weight: 800; color: #0f172a; line-height: 1.15;">
                                 upGrad <span style="color:#eb1c24;">SOT</span>
                             </div>
-                            <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;">
-                                ADMIN PORTAL
+                            <div style="font-size: 0.72rem; color: #64748b; font-weight: 600;">
+                                Answer Sheet Grader
                             </div>
                         </div>
                     </div>
@@ -93,17 +85,9 @@ def render_sidebar():
                 unsafe_allow_html=True,
             )
 
-        # ── 2. Search Box ──────────────────────────────────────────────
-        st.text_input(
-            "Search portal",
-            placeholder="Search... ⌘K",
-            label_visibility="collapsed",
-            key="portal_search_input",
-        )
+        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
-        st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
-
-        # ── 3. Navigation Menu ─────────────────────────────────────────
+        # ── 2. Navigation Menu ─────────────────────────────────────────
         current_page = st.session_state.get("current_page", "upload")
         session = st.session_state.get("grading_session")
 

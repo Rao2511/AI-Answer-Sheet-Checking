@@ -6,12 +6,20 @@ from core.rubric_parser import parse_rubric_document
 
 
 def render_upload_page():
-    """Renders the Overview & File Upload interface."""
-    from ui.portal_header import render_portal_header
-    render_portal_header(page_title="Overview")
-
-    st.markdown("#### 📤 Upload Examination Documents")
-    st.markdown("<p style='color:#64748b; font-size:0.88rem; margin-top:-6px; margin-bottom:16px;'>Upload scanned student answer sheets (.pdf) and the examination grading rubric scheme (.docx or .pdf).</p>", unsafe_allow_html=True)
+    """Renders the Upload Examination Documents interface."""
+    st.markdown(
+        """
+        <div style="margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
+            <div style="font-size: 1.85rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2;">
+                📤 Upload Examination Documents
+            </div>
+            <div style="font-size: 0.92rem; color: #64748b; margin-top: 6px;">
+                Upload scanned student answer sheets (.pdf) and the examination grading rubric scheme (.docx or .pdf).
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     col1, col2 = st.columns(2)
 
