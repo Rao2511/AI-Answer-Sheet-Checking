@@ -190,7 +190,7 @@ def render_sidebar():
             st.session_state.pop("cached_models", None)
             if is_local:
                 st.session_state["api_key"] = "local"
-                st.session_state["selected_model"] = "qwen2.5-vl:7b"
+                st.session_state["selected_model"] = "qwen2.5vl:7b"
             elif is_claude:
                 st.session_state["api_key"] = st.session_state.get("claude_api_key", "")
                 st.session_state["selected_model"] = "claude-sonnet-5-5"
@@ -238,17 +238,16 @@ def render_sidebar():
                 st.markdown(
                     """
                     <div style="font-size:0.74rem; color:#334155; line-height:1.45;">
-                        <b>1. Install Ollama:</b><br/>
-                        • Download Mac App: <a href="https://ollama.com/download" target="_blank" style="color:#eb1c24; font-weight:600;">ollama.com/download</a><br/>
-                        • Or run in Terminal: <code>curl -fsSL https://ollama.com/install.sh | sh</code><br/><br/>
-                        <b>2. Start Ollama:</b><br/>
-                        Open <code>Ollama.app</code> from Applications or run <code>ollama serve</code><br/><br/>
-                        <b>3. Download Vision Model:</b><br/>
+                        <b>1. Ollama is Already Installed & Running!</b><br/>
+                        • Ollama daemon is running at <code>http://127.0.0.1:11434</code><br/><br/>
+                        <b>2. Download Vision Model in Terminal:</b><br/>
                         Run in Terminal:<br/>
-                        <code>ollama run qwen2.5-vl</code><br/>
-                        <i>(or <code>ollama run llama3.2-vision</code>)</i><br/><br/>
+                        <code>ollama pull qwen2.5vl:7b</code><br/>
+                        <i>(or <code>ollama pull qwen2.5vl:3b</code> for lower RAM, or <code>ollama pull llama3.2-vision</code>)</i><br/><br/>
+                        <b>3. Test Connection:</b><br/>
+                        Click <b>🔌 Test Local Connection</b> below to verify!<br/><br/>
                         <div style="background:#f1f5f9; padding:6px 8px; border-radius:6px; margin-top:4px;">
-                            💡 <b>No Setup Alternative:</b> Switch to <b>🟢 Google Gemini</b> above for 1,500 free evaluations/day without installing anything on your Mac.
+                            💡 <b>Zero-Download Cloud Alternative:</b> Switch to <b>🟢 Google Gemini</b> above for 1,500 free evaluations/day without needing multi-GB local downloads.
                         </div>
                     </div>
                     """,

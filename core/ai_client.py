@@ -35,13 +35,14 @@ GEMINI_DEFAULT_MODELS = [
 
 # Default Local Ollama Vision Models (Metal Apple Silicon accelerated)
 OLLAMA_DEFAULT_MODELS = [
-    "qwen2.5-vl:7b",
-    "qwen2.5-vl:latest",
+    "qwen2.5vl:7b",
+    "qwen2.5vl:3b",
+    "qwen2.5vl:latest",
     "llama3.2-vision:11b",
     "llama3.2-vision:latest",
-    "minicpm-v:latest",
     "llava:latest",
-    "deepseek-r1:latest",
+    "qwen2.5-vl:7b",
+    "minicpm-v:latest",
 ]
 
 DEFAULT_OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
