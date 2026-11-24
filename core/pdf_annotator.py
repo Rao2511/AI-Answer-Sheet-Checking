@@ -50,8 +50,8 @@ def annotate_graded_pdf(input_pdf_bytes: bytes, grading_result: StudentGradingRe
     return output_stream.getvalue()
 
 def _add_summary_banner(page: fitz.Page, width: float, grading_result: StudentGradingResult) -> None:
-    """Adds a summary banner at the top of the first page."""
-    banner_height = 50
+    """Adds a branded summary banner at the top of the first page."""
+    banner_height = 54
     banner_rect = fitz.Rect(0, 0, width, banner_height)
     
     # Ensure percentage is computed
@@ -59,23 +59,32 @@ def _add_summary_banner(page: fitz.Page, width: float, grading_result: StudentGr
     if percentage is None:
         percentage = grading_result.compute_percentage()
         
-    pass_fail = "PASS" if percentage >= 50.0 else "FAIL"
-    color = (0.0, 0.5, 0.0) if pass_fail == "PASS" else (0.8, 0.0, 0.0)
+    pass_fail = "PASS" if percentage >= 50.0 else "NEEDS IMPROVEMENT"
+    border_color = (0.92, 0.11, 0.14)  # upGrad Red #eb1c24
+    bg_color = (0.98, 0.98, 0.99)
     
-    page.draw_rect(banner_rect, color=color, fill=color, fill_opacity=0.2)
-    
-    summary_text = (
-        f"Total Score: {grading_result.total_marks_awarded}/{grading_result.total_max_marks} "
-        f"({percentage}%) - {pass_fail}"
-    )
+    page.draw_rect(banner_rect, color=border_color, fill=bg_color, width=1.2)
+    page.draw_rect(fitz.Rect(0, 0, 6, banner_height), color=border_color, fill=border_color)
     
     page.insert_text(
-        fitz.Point(20, 30),
+        fitz.Point(18, 20),
+        "UPGRAD SCHOOL OF TECHNOLOGY  |  OFFICIAL EVALUATION",
+        fontsize=8.5,
+        color=(0.5, 0.5, 0.6),
+        fontname="helvetica-bold"
+    )
+    
+    summary_text = (
+        f"Score: {grading_result.total_marks_awarded:.1f} / {grading_result.total_max_marks:.1f}  "
+        f"({percentage:.1f}%)  -  {pass_fail}"
+    )
+    score_color = (0.1, 0.55, 0.2) if percentage >= 50.0 else (0.85, 0.15, 0.15)
+    page.insert_text(
+        fitz.Point(18, 40),
         summary_text,
-        fontsize=16,
-        color=color,
-        fontname="helv",
-        fontfile=None
+        fontsize=13,
+        color=score_color,
+        fontname="helvetica-bold"
     )
 
 def _annotate_answer(page: fitz.Page, width: float, height: float, result: GradedQuestion) -> None:

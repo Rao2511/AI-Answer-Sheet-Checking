@@ -79,8 +79,8 @@ def init_session_state():
 
 def main():
     st.set_page_config(
-        page_title='Answer Sheet Grader', 
-        page_icon='📝', 
+        page_title='upGrad School of Technology — Answer Sheet Grader', 
+        page_icon='🎓', 
         layout='wide',
         initial_sidebar_state="expanded"
     )

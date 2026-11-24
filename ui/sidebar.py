@@ -3,64 +3,140 @@ import streamlit as st
 from core.theme_manager import get_theme
 
 
-# Navigation items with icons and page keys
+# Navigation items matching upGrad School of Technology Admin Portal layout
 NAV_ITEMS = [
-    ("📤", "Upload Documents", "upload"),
-    ("📋", "Rubric Review", "rubric_review"),
+    ("⊞", "Overview", "upload"),
+    ("📋", "Rubric Scheme", "rubric_review"),
     ("⚡", "Auto-Grade Exam", "grade"),
     ("🔍", "Manual Review", "review"),
     ("📑", "Student Reports", "student_reports"),
     ("📊", "Class Analytics", "dashboard"),
-    ("📥", "Export & Downloads", "downloads"),
+    ("📥", "Export Hub", "downloads"),
 ]
 
 
+def get_upgrad_logo_base64() -> str:
+    """Reads the upGrad School of Technology logo and returns it as base64."""
+    logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "upgrad_logo.jpg")
+    try:
+        if os.path.exists(logo_path):
+            import base64
+            with open(logo_path, "rb") as f:
+                return base64.b64encode(f.read()).decode("utf-8")
+    except Exception:
+        pass
+    return ""
+
+
 def render_sidebar():
-    """Renders the clean, modern sidebar with White & Red theme styling."""
+    """Renders the upGrad School of Technology Admin Portal sidebar."""
     theme = get_theme()
 
     with st.sidebar:
-        # ── Logo & App Title ───────────────────────────────────────────
-        st.markdown(
-            f"""
-            <div style="padding: 16px 4px 8px 4px;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+        # ── 1. upGrad School of Technology Logo & Header ──────────────
+        logo_b64 = get_upgrad_logo_base64()
+
+        if logo_b64:
+            st.markdown(
+                f"""
+                <div style="padding: 10px 4px 12px 4px; text-align: center;">
+                    <img src="data:image/jpeg;base64,{logo_b64}" 
+                         style="width: 175px; max-width: 100%; height: auto; display: block; margin: 0 auto;" 
+                         alt="upGrad School of Technology" />
                     <div style="
-                        width: 44px; 
-                        height: 44px; 
-                        border-radius: 12px; 
-                        background: {theme['accent_gradient']}; 
-                        display: flex; 
-                        align-items: center; 
-                        justify-content: center;
-                        font-size: 1.35rem;
-                        box-shadow: 0 4px 16px rgba(225, 29, 72, 0.25);
-                        color: white;
-                    ">📝</div>
-                    <div>
+                        font-size: 0.68rem; 
+                        color: #94a3b8; 
+                        font-weight: 700; 
+                        letter-spacing: 0.16em; 
+                        text-transform: uppercase; 
+                        margin-top: 10px;
+                    ">ADMIN PORTAL</div>
+                    <div style="
+                        font-size: 0.85rem; 
+                        color: #0f172a; 
+                        font-weight: 800; 
+                        letter-spacing: -0.02em; 
+                        margin-top: 2px;
+                    ">Answer Sheet Grader</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f"""
+                <div style="padding: 14px 4px 10px 4px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
                         <div style="
-                            font-size: 1.2rem;
-                            font-weight: 800;
-                            letter-spacing: -0.025em;
-                            color: #0f172a;
-                            line-height: 1.2;
-                        ">AutoGrade <span style="color:#e11d48;">AI</span></div>
-                        <div style="font-size: 0.73rem; color: #64748b; font-weight: 500;">
-                            Answer Sheet Grader
+                            width: 40px; 
+                            height: 40px; 
+                            border-radius: 10px; 
+                            background: {theme['accent_primary']}; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center;
+                            font-size: 1.25rem;
+                            color: white;
+                            box-shadow: 0 4px 12px rgba(235, 28, 36, 0.25);
+                        ">🎓</div>
+                        <div>
+                            <div style="font-size: 1.1rem; font-weight: 800; color: #0f172a; line-height: 1.15;">
+                                upGrad <span style="color:#eb1c24;">SOT</span>
+                            </div>
+                            <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;">
+                                ADMIN PORTAL
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+                """,
+                unsafe_allow_html=True,
+            )
+
+        # ── 2. Search Box ──────────────────────────────────────────────
+        st.text_input(
+            "Search portal",
+            placeholder="Search... ⌘K",
+            label_visibility="collapsed",
+            key="portal_search_input",
         )
+
+        st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
+
+        # ── 3. Navigation Menu ─────────────────────────────────────────
+        current_page = st.session_state.get("current_page", "upload")
+        session = st.session_state.get("grading_session")
+
+        for icon, label, page_key in NAV_ITEMS:
+            is_active = current_page == page_key
+
+            # Badge indicator
+            badge = ""
+            if page_key == "review" and session and session.students_needing_review > 0:
+                badge = f"  [{session.students_needing_review}]"
+            elif page_key == "student_reports" and session and session.total_students > 0:
+                badge = f"  [{session.total_students}]"
+
+            if is_active:
+                btn_label = f"{icon}  {label}{badge}  ✦"
+            else:
+                btn_label = f"{icon}  {label}{badge}"
+
+            if st.button(
+                btn_label,
+                key=f"nav_{page_key}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                st.session_state["current_page"] = page_key
+                st.rerun()
 
         st.divider()
 
-        # ── ⚡ AI Provider Selector ─────────────────────────────────────
+        # ── 4. ⚡ AI Engine & Provider Configuration ───────────────────
         st.markdown(
-            "<p style='font-size:0.75rem; color:#64748b; font-weight:700; "
-            "text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;'>⚡ AI Provider</p>",
+            "<p style='font-size:0.72rem; color:#94a3b8; font-weight:700; "
+            "text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;'>⚡ AI Evaluation Engine</p>",
             unsafe_allow_html=True,
         )
 
@@ -139,7 +215,7 @@ def render_sidebar():
                 st.session_state["selected_model"] = "gemini-2.5-flash"
             st.rerun()
 
-        # ── 🔑 Engine Configuration / API Key Input ─────────────────────
+        # Engine Settings
         if is_local:
             st.markdown(
                 """
@@ -148,14 +224,14 @@ def render_sidebar():
                     border: 1px solid rgba(16, 185, 129, 0.3);
                     border-radius: 8px;
                     padding: 8px 12px;
-                    margin-top: 8px;
-                    margin-bottom: 8px;
+                    margin-top: 6px;
+                    margin-bottom: 6px;
                 ">
-                    <div style="font-weight: 700; color: #047857; font-size: 0.78rem; display: flex; align-items: center; gap: 6px;">
+                    <div style="font-weight: 700; color: #047857; font-size: 0.76rem; display: flex; align-items: center; gap: 6px;">
                         <span>💻</span> 100% Offline AI (Zero API Keys)
                     </div>
-                    <div style="font-size: 0.71rem; color: #475569; margin-top: 3px; line-height: 1.35;">
-                        Runs directly on your Mac GPU (Metal accelerated) via local Ollama. Private, secure, and free.
+                    <div style="font-size: 0.70rem; color: #475569; margin-top: 3px; line-height: 1.35;">
+                        Runs on Mac GPU via local Ollama. Private and secure.
                     </div>
                 </div>
                 """,
@@ -165,7 +241,7 @@ def render_sidebar():
                 "Ollama Endpoint",
                 value=st.session_state.get("ollama_endpoint", "http://localhost:11434"),
                 placeholder="http://localhost:11434",
-                help="Local or network Ollama API address (default: http://localhost:11434)",
+                help="Local Ollama address (default: http://localhost:11434)",
                 key="input_ollama_endpoint",
             )
             if ollama_endpoint != st.session_state.get("ollama_endpoint"):
@@ -174,17 +250,12 @@ def render_sidebar():
             st.session_state["api_key"] = "local"
             active_key = "local"
 
-            # Setup Guide Expander
-            with st.expander("🛠️ How to setup Local Offline AI", expanded=False):
+            with st.expander("🛠️ Setup Local AI Guide", expanded=False):
                 st.markdown(
                     """
-                    <div style="font-size:0.75rem; color:#334155; line-height:1.4;">
-                    <b>Quick 2-Step Terminal Setup:</b><br/>
-                    1. Install Ollama:
-                    <pre style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:0.72rem; margin:4px 0;">brew install ollama</pre>
-                    2. Run Local Vision Model:
-                    <pre style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:0.72rem; margin:4px 0;">ollama run qwen2.5-vl</pre>
-                    <i>(Alternative models: <code>llama3.2-vision:11b</code>, <code>minicpm-v</code>)</i>
+                    <div style="font-size:0.73rem; color:#334155; line-height:1.4;">
+                    1. Install: <code>brew install ollama</code><br/>
+                    2. Run: <code>ollama run qwen2.5-vl</code>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -192,15 +263,15 @@ def render_sidebar():
 
         elif is_claude:
             st.markdown(
-                "<p style='font-size:0.75rem; color:#64748b; font-weight:700; "
-                "text-transform:uppercase; letter-spacing:0.06em; margin-top:8px; margin-bottom:4px;'>🔴 Anthropic Claude API Key</p>",
+                "<p style='font-size:0.72rem; color:#64748b; font-weight:700; "
+                "text-transform:uppercase; letter-spacing:0.06em; margin-top:6px; margin-bottom:4px;'>🔴 Claude API Key</p>",
                 unsafe_allow_html=True,
             )
             c_key_input = st.text_input(
                 "Claude API Key",
                 type="password",
                 value=st.session_state.get("claude_api_key", ""),
-                placeholder="Paste sk-ant-api03-... or sk-ant-usr-...",
+                placeholder="sk-ant-...",
                 label_visibility="collapsed",
                 key="input_claude_active_key",
             )
@@ -210,28 +281,17 @@ def render_sidebar():
             st.session_state["api_key"] = c_key_input
             active_key = c_key_input
 
-            if active_key:
-                st.markdown(
-                    "<p style='color:#e11d48; font-size:0.74rem; font-weight:600; margin:2px 0 6px 0;'>"
-                    "🔴 Anthropic Claude active</p>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    "<p style='color:#e11d48; font-size:0.74rem; margin:2px 0 6px 0;'>⚠️ Claude API Key required</p>",
-                    unsafe_allow_html=True,
-                )
         else:
             st.markdown(
-                "<p style='font-size:0.75rem; color:#64748b; font-weight:700; "
-                "text-transform:uppercase; letter-spacing:0.06em; margin-top:8px; margin-bottom:4px;'>🟢 Google Gemini API Key</p>",
+                "<p style='font-size:0.72rem; color:#64748b; font-weight:700; "
+                "text-transform:uppercase; letter-spacing:0.06em; margin-top:6px; margin-bottom:4px;'>🟢 Gemini API Key</p>",
                 unsafe_allow_html=True,
             )
             g_key_input = st.text_input(
                 "Gemini API Key",
                 type="password",
                 value=st.session_state.get("gemini_api_key", ""),
-                placeholder="Paste AIzaSy...",
+                placeholder="AIzaSy...",
                 label_visibility="collapsed",
                 key="input_gemini_active_key",
             )
@@ -241,53 +301,7 @@ def render_sidebar():
             st.session_state["api_key"] = g_key_input
             active_key = g_key_input
 
-            if active_key:
-                st.markdown(
-                    "<p style='color:#10b981; font-size:0.74rem; font-weight:600; margin:2px 0 6px 0;'>"
-                    "🟢 Google Gemini active</p>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    "<p style='color:#e11d48; font-size:0.74rem; margin:2px 0 6px 0;'>⚠️ Gemini API Key required</p>",
-                    unsafe_allow_html=True,
-                )
-
-        # ── ⚙️ Manage Both API Keys Expander ───────────────────────────
-        with st.expander("🔑 Manage Saved API Keys", expanded=False):
-            st.markdown(
-                "<p style='font-size:0.75rem; color:#64748b; margin-bottom:6px;'>"
-                "Save your cloud keys to easily switch between Claude and Gemini:</p>",
-                unsafe_allow_html=True,
-            )
-            both_c = st.text_input(
-                "Anthropic Key",
-                value=st.session_state.get("claude_api_key", ""),
-                type="password",
-                key="exp_both_claude",
-            )
-            both_g = st.text_input(
-                "Gemini Key",
-                value=st.session_state.get("gemini_api_key", ""),
-                type="password",
-                key="exp_both_gemini",
-            )
-            if both_c != st.session_state.get("claude_api_key"):
-                st.session_state["claude_api_key"] = both_c
-                if is_claude:
-                    st.session_state["api_key"] = both_c
-            if both_g != st.session_state.get("gemini_api_key"):
-                st.session_state["gemini_api_key"] = both_g
-                if is_gemini:
-                    st.session_state["api_key"] = both_g
-
-        # ── 🤖 AI Model Selection ──────────────────────────────────────
-        st.markdown(
-            "<p style='font-size:0.75rem; color:#64748b; font-weight:700; "
-            "text-transform:uppercase; letter-spacing:0.06em; margin-top:8px; margin-bottom:6px;'>🤖 AI Model</p>",
-            unsafe_allow_html=True,
-        )
-
+        # Model Selection
         cached_m = st.session_state.get("cached_models")
         ws_id = os.getenv("ANTHROPIC_WORKSPACE_ID", "")
         current_endpoint = st.session_state.get("ollama_endpoint", "http://localhost:11434")
@@ -303,7 +317,6 @@ def render_sidebar():
                 model_options = get_available_models(active_key, provider="Google Gemini") if active_key else GEMINI_DEFAULT_MODELS
 
         default_model = model_options[0] if model_options else ("qwen2.5-vl:7b" if is_local else ("claude-sonnet-5-5" if is_claude else "gemini-2.5-flash"))
-
         current_model = st.session_state.get("selected_model")
         if not current_model or (is_local and not any(k in current_model for k in ["qwen", "llama", "llava", "minicpm", "deepseek"])) or (is_claude and "gemini" in current_model) or (is_gemini and "claude" in current_model):
             current_model = default_model
@@ -318,15 +331,9 @@ def render_sidebar():
 
         # Test Connection Button
         if is_local or active_key:
-            if is_local:
-                test_label = "🔌 Test Local Ollama Connection"
-            elif is_claude:
-                test_label = "🔌 Test Claude Connection"
-            else:
-                test_label = "🔌 Test Gemini Connection"
-
+            test_label = "🔌 Test Local Connection" if is_local else ("🔌 Test Claude" if is_claude else "🔌 Test Gemini")
             if st.button(test_label, use_container_width=True, key="btn_test_conn"):
-                with st.spinner("Testing AI connection..."):
+                with st.spinner("Testing connection..."):
                     ok, msg, discovered_models = test_api_connection(
                         api_key=active_key,
                         model_name=selected_model,
@@ -344,64 +351,34 @@ def render_sidebar():
 
         st.divider()
 
-        # ── 🧭 Navigation ──────────────────────────────────────────────
+        # ── 5. Live Portal Status ──────────────────────────────────────
         st.markdown(
-            "<p style='font-size:0.75rem; color:#64748b; font-weight:700; "
-            "text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;'>🧭 Navigation</p>",
-            unsafe_allow_html=True,
-        )
-
-        current_page = st.session_state.get("current_page", "upload")
-
-        for icon, label, page_key in NAV_ITEMS:
-            is_active = current_page == page_key
-            btn_label = f"▸ {icon}  {label}" if is_active else f"{icon}   {label}"
-
-            if st.button(
-                btn_label,
-                key=f"nav_{page_key}",
-                use_container_width=True,
-                type="primary" if is_active else "secondary",
-            ):
-                st.session_state["current_page"] = page_key
-                st.rerun()
-
-        st.divider()
-
-        # ── 📊 Status Indicators ────────────────────────────────────────
-        st.markdown(
-            "<p style='font-size:0.75rem; color:#64748b; font-weight:700; "
-            "text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;'>📊 Live Status</p>",
+            "<p style='font-size:0.72rem; color:#94a3b8; font-weight:700; "
+            "text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;'>📊 Live Status</p>",
             unsafe_allow_html=True,
         )
 
         pdfs = st.session_state.get("uploaded_pdfs", [])
         rubric = st.session_state.get("parsed_rubric")
-        session = st.session_state.get("grading_session")
 
         _status_item("Answer Sheets", f"{len(pdfs)} loaded" if pdfs else "Pending", bool(pdfs))
-        _status_item("Exam Rubric", "Ready ✓" if rubric else "Not parsed", bool(rubric))
-
+        _status_item("Rubric Scheme", "Ready ✓" if rubric else "Not parsed", bool(rubric))
         if session and session.student_results:
-            _status_item(
-                "Grading Status",
-                f"{session.total_students} completed",
-                True,
-            )
+            _status_item("Grading Status", f"{session.total_students} completed", True)
         else:
             _status_item("Grading Status", "Not started", False)
 
-        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
 
 def _status_item(label: str, value: str, is_ok: bool):
     """Renders a single sleek status indicator line."""
-    dot_color = "#e11d48" if is_ok else "#cbd5e1"
+    dot_color = "#eb1c24" if is_ok else "#cbd5e1"
     val_color = "#0f172a" if is_ok else "#94a3b8"
     st.markdown(
         f"""
         <div style='display:flex; justify-content:space-between; align-items:center; 
-                    padding:5px 0; font-size:0.82rem; border-bottom:1px solid #f1f5f9;'>
+                    padding:5px 0; font-size:0.80rem; border-bottom:1px solid #f1f5f9;'>
             <span style='display:flex; align-items:center; gap:7px; color:#334155;'>
                 <span style='width:7px; height:7px; border-radius:50%; background:{dot_color}; 
                              box-shadow: 0 0 6px {dot_color if is_ok else "transparent"}; display:inline-block;'></span>

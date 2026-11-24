@@ -94,58 +94,118 @@ p, span, label {
 
 /* ─── Sidebar ─────────────────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+    background: #ffffff !important;
     border-right: 1px solid #e2e8f0 !important;
-    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.03) !important;
+    box-shadow: 2px 0 16px rgba(0, 0, 0, 0.02) !important;
 }
 
 section[data-testid="stSidebar"] hr {
     border-color: #f1f5f9 !important;
-    margin: 1.1rem 0 !important;
+    margin: 1rem 0 !important;
+}
+
+/* Search input in sidebar */
+section[data-testid="stSidebar"] input[type="text"] {
+    border-radius: 9999px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 0.55rem 1rem !important;
+    font-size: 0.85rem !important;
+    color: #334155 !important;
+    margin-bottom: 6px !important;
+}
+
+section[data-testid="stSidebar"] input[type="text"]::placeholder {
+    color: #94a3b8 !important;
+}
+
+section[data-testid="stSidebar"] input[type="text"]:focus {
+    border-color: #eb1c24 !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(235, 28, 36, 0.12) !important;
 }
 
 /* Sidebar Navigation Buttons */
 section[data-testid="stSidebar"] .stButton > button {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
     color: #334155 !important;
-    border-radius: 10px !important;
-    padding: 0.5rem 0.9rem !important;
-    font-size: 0.88rem !important;
+    border-radius: 12px !important;
+    padding: 0.62rem 1rem !important;
+    font-size: 0.92rem !important;
     font-weight: 500 !important;
     text-align: left !important;
     justify-content: flex-start !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-    transition: all 0.2s ease !important;
+    box-shadow: none !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    margin-bottom: 3px !important;
 }
 
 section[data-testid="stSidebar"] .stButton > button:hover {
-    background: rgba(225, 29, 72, 0.06) !important;
-    border-color: #e11d48 !important;
-    color: #e11d48 !important;
-    transform: translateX(3px) !important;
-    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.12) !important;
+    background: #f8fafc !important;
+    border-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    transform: translateX(2px) !important;
 }
 
+/* Active Navigation Item (Matches upGrad Admin Portal Screenshot) */
 section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
-    background: linear-gradient(90deg, rgba(225, 29, 72, 0.12) 0%, rgba(244, 63, 94, 0.05) 100%) !important;
-    border-left: 3px solid #e11d48 !important;
-    border-color: rgba(225, 29, 72, 0.3) !important;
-    color: #e11d48 !important;
+    background: #eb1c24 !important;
+    background: linear-gradient(135deg, #eb1c24 0%, #d4141c 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
     font-weight: 700 !important;
+    box-shadow: 0 4px 14px rgba(235, 28, 36, 0.3) !important;
+    border-radius: 12px !important;
+}
+
+section[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
+    background: #c81018 !important;
+    color: #ffffff !important;
+    transform: none !important;
+}
+
+/* ─── upGrad Admin Portal Hero Components ──────────────────────────────── */
+.upgrad-hero-stat {
+    font-size: 3.4rem !important;
+    font-weight: 900 !important;
+    color: #eb1c24 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1.1 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.upgrad-hero-sub {
+    font-size: 1.55rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.02em !important;
+    margin-top: 4px !important;
+}
+
+.upgrad-hero-desc {
+    font-size: 0.95rem !important;
+    color: #475569 !important;
+    margin-top: 4px !important;
+    line-height: 1.5 !important;
 }
 
 /* ─── White & Red Glass Cards ─────────────────────────────────────────── */
 .glass-card {
     background: #ffffff !important;
-    border: 1px solid rgba(225, 29, 72, 0.16) !important;
+    border: 1px solid #e2e8f0 !important;
     border-radius: 18px !important;
     padding: 24px !important;
     margin-bottom: 16px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.25s ease !important;
     position: relative;
     overflow: hidden;
+}
+
+.glass-card:hover {
+    border-color: #eb1c24 !important;
+    box-shadow: 0 6px 24px rgba(235, 28, 36, 0.08) !important;
 }
 
 .glass-card::before {

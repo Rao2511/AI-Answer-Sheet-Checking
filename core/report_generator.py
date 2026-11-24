@@ -246,21 +246,28 @@ def generate_student_report_card_pdf(
     page = doc.new_page(width=page_width, height=page_height)
     
     # ── Top Header Banner ──
-    banner_height = 65
-    header_color = (0.12, 0.22, 0.55)  # Navy Blue
+    banner_height = 68
+    header_color = (0.92, 0.11, 0.14)  # upGrad Crimson Red #eb1c24
     page.draw_rect(fitz.Rect(0, 0, page_width, banner_height), color=header_color, fill=header_color)
     page.insert_text(
-        fitz.Point(30, 32),
+        fitz.Point(30, 25),
+        "UPGRAD SCHOOL OF TECHNOLOGY",
+        fontsize=10,
+        color=(1, 0.88, 0.88),
+        fontname="helvetica-bold"
+    )
+    page.insert_text(
+        fitz.Point(30, 44),
         "STUDENT EVALUATION REPORT CARD",
-        fontsize=16,
+        fontsize=15,
         color=(1, 1, 1),
         fontname="helvetica-bold"
     )
     page.insert_text(
-        fitz.Point(30, 50),
+        fitz.Point(30, 58),
         f"{exam_title.upper()}  |  SUBJECT: {subject.upper()}",
-        fontsize=10,
-        color=(0.8, 0.88, 1),
+        fontsize=8.5,
+        color=(1, 0.9, 0.9),
         fontname="helv"
     )
 
@@ -334,7 +341,7 @@ def generate_student_report_card_pdf(
         p.draw_line(fitz.Point(30, page_height - 35), fitz.Point(page_width - 30, page_height - 35), color=(0.8, 0.8, 0.85), width=0.5)
         p.insert_text(
             fitz.Point(30, page_height - 20),
-            "Generated automatically by AI Answer Sheet Evaluator  |  Verified by Academic Staff",
+            "upGrad School of Technology  |  AI Examination Evaluation Portal  |  Verified by Faculty",
             fontsize=8,
             color=(0.5, 0.5, 0.6),
             fontname="helv"
