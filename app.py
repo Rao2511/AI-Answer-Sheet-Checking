@@ -13,6 +13,8 @@ from ui.results_page import render_results_page
 from ui.dashboard_page import render_dashboard_page
 from ui.student_reports_page import render_student_reports_page
 
+import uuid
+from core.database import init_db
 from core.theme_manager import generate_theme_css
 
 def load_css():
@@ -68,6 +70,9 @@ def init_session_state():
         st.session_state['api_key'] = st.session_state.get('claude_api_key', '')
         if 'selected_model' not in st.session_state or 'gemini' in st.session_state.get('selected_model', '') or 'qwen' in st.session_state.get('selected_model', ''):
             st.session_state['selected_model'] = 'claude-sonnet-5-5'
+
+    if 'session_id' not in st.session_state:
+        st.session_state['session_id'] = str(uuid.uuid4())[:8]
     if 'uploaded_pdfs' not in st.session_state:
         st.session_state['uploaded_pdfs'] = []
     if 'rubric_file' not in st.session_state:
@@ -82,6 +87,7 @@ def init_session_state():
         st.session_state['grading_session'] = None
 
 def main():
+    init_db()
     st.set_page_config(
         page_title='upGrad School of Technology — Answer Sheet Grader', 
         page_icon='🎓', 

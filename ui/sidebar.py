@@ -346,6 +346,9 @@ def render_sidebar():
         qp_file = st.session_state.get("question_paper_file")
         rubric = st.session_state.get("parsed_rubric")
 
+        from core.database import get_database_stats
+        db_stats = get_database_stats()
+
         _status_item("Answer Sheets", f"{len(pdfs)} loaded" if pdfs else "Pending", bool(pdfs))
         _status_item("Question Paper", "Loaded ✓" if qp_file else "Optional", bool(qp_file))
         _status_item("Rubric Scheme", "Ready ✓" if rubric else "Not parsed", bool(rubric))
@@ -353,8 +356,16 @@ def render_sidebar():
             _status_item("Grading Status", f"{session.total_students} completed", True)
         else:
             _status_item("Grading Status", "Not started", False)
+        _status_item("SQLite DB", f"{db_stats['total_sessions']} exams saved", True)
 
-        st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+        active_sid = st.session_state.get("session_id", "default")
+        st.markdown(
+            f"<div style='font-size:0.71rem; color:#94a3b8; margin-top:10px; text-align:center;'>"
+            f"Active Session: <code style='color:#eb1c24; font-weight:700;'>{active_sid[:8]}</code></div>",
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
 
 def _status_item(label: str, value: str, is_ok: bool):

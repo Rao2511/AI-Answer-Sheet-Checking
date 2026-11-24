@@ -1,15 +1,25 @@
-"""
-Upload page for answer sheets and rubric documents.
-"""
 import streamlit as st
+import uuid
 from core.rubric_parser import parse_rubric_document
+from core.database import (
+    save_or_update_session,
+    save_uploaded_batch,
+    list_all_sessions,
+    load_full_session,
+    delete_session,
+)
 
 
 def render_upload_page():
-    """Renders the Upload Examination Documents interface."""
+    """Renders the Upload Examination Documents interface with automatic database persistence."""
+    current_sid = st.session_state.get("session_id")
+    if not current_sid:
+        current_sid = str(uuid.uuid4())[:8]
+        st.session_state["session_id"] = current_sid
+
     st.markdown(
         """
-        <div style="margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
+        <div style="margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;">
             <div style="font-size: 1.85rem; font-weight: 800; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2;">
                 📤 Upload Examination Documents
             </div>
@@ -20,6 +30,66 @@ def render_upload_page():
         """,
         unsafe_allow_html=True,
     )
+
+    # ── Database Session Manager ──────────────────────────────────────
+    saved_sessions = list_all_sessions()
+    with st.expander(f"💾 Database Records & Past Exams ({len(saved_sessions)} saved)", expanded=False):
+        if saved_sessions:
+            st.markdown(
+                "<p style='font-size:0.82rem; color:#64748b; margin-bottom:8px;'>"
+                "All uploaded answer sheets, question papers, rubrics, and grades are permanently stored in SQLite database. "
+                "Select a past exam to reload it instantly:</p>",
+                unsafe_allow_html=True,
+            )
+            session_map = {}
+            for s in saved_sessions:
+                s_label = f"📝 {s['exam_title']} ({s['subject']}) — {s['student_count']} students graded • {s['answer_sheet_count']} files • [{s['created_at'][:10]}]"
+                session_map[s["session_id"]] = s_label
+
+            sel_session_id = st.selectbox(
+                "Select Saved Exam Session:",
+                options=list(session_map.keys()),
+                format_func=lambda sid: session_map[sid],
+                key="db_past_session_selector",
+            )
+
+            col_load, col_del, col_new = st.columns([1, 1, 1])
+            with col_load:
+                if st.button("📂 Load Selected Exam", key="btn_load_session_db", use_container_width=True, type="primary"):
+                    loaded = load_full_session(sel_session_id)
+                    if loaded:
+                        st.session_state["session_id"] = sel_session_id
+                        st.session_state["parsed_rubric"] = loaded["rubric"]
+                        st.session_state["uploaded_pdfs"] = loaded["answer_sheets"]
+                        st.session_state["question_paper_file"] = loaded["question_paper_file"]
+                        st.session_state["rubric_file"] = loaded["rubric_file"]
+                        st.session_state["question_paper_text"] = loaded["question_paper_text"]
+                        if loaded["grading_session"]:
+                            st.session_state["grading_session"] = loaded["grading_session"]
+                        st.success(f"✅ Loaded exam: **{loaded['exam_title']}** with {len(loaded['answer_sheets'])} answer sheet(s)!")
+                        st.rerun()
+
+            with col_del:
+                if st.button("🗑️ Delete Selected Exam", key="btn_del_session_db", use_container_width=True):
+                    delete_session(sel_session_id)
+                    st.warning("Exam session deleted from database.")
+                    st.rerun()
+
+            with col_new:
+                if st.button("➕ Start Fresh Exam", key="btn_fresh_exam_db", use_container_width=True):
+                    st.session_state["session_id"] = str(uuid.uuid4())[:8]
+                    st.session_state["parsed_rubric"] = None
+                    st.session_state["uploaded_pdfs"] = []
+                    st.session_state["question_paper_file"] = None
+                    st.session_state["rubric_file"] = None
+                    st.session_state["question_paper_text"] = None
+                    st.session_state["grading_session"] = None
+                    st.info("Started a new exam session.")
+                    st.rerun()
+        else:
+            st.info("ℹ️ No saved exams found in database yet. Upload documents below and they will be automatically saved.")
+
+    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
 
@@ -42,7 +112,9 @@ def render_upload_page():
         )
         if uploaded_pdfs:
             st.session_state["uploaded_pdfs"] = uploaded_pdfs
-            st.success(f"✅ Loaded **{len(uploaded_pdfs)}** answer sheet(s)")
+            # Auto-persist answer sheets to database
+            save_uploaded_batch(current_sid, answer_sheets=uploaded_pdfs)
+            st.success(f"✅ Loaded & Saved **{len(uploaded_pdfs)}** answer sheet(s)")
 
             with st.expander("📁 View uploaded files", expanded=False):
                 for pdf in uploaded_pdfs:
@@ -133,14 +205,21 @@ def render_upload_page():
         )
         if question_paper_file:
             st.session_state["question_paper_file"] = question_paper_file
+            save_uploaded_batch(current_sid, question_paper_file=question_paper_file)
             qp_size_kb = question_paper_file.size / 1024
-            st.success(f"✅ Loaded **{question_paper_file.name}** ({qp_size_kb:.1f} KB)")
+            st.success(f"✅ Loaded & Saved **{question_paper_file.name}** ({qp_size_kb:.1f} KB)")
 
             with st.expander("👁️ Preview Question Paper Content", expanded=False):
                 from core.rubric_parser import extract_text_from_file_bytes
                 try:
                     qp_raw = extract_text_from_file_bytes(question_paper_file.getvalue(), question_paper_file.name)
                     st.session_state["question_paper_text"] = qp_raw
+                    # Update question paper text in DB session record
+                    save_or_update_session(
+                        session_id=current_sid,
+                        question_paper_filename=question_paper_file.name,
+                        question_paper_text=qp_raw,
+                    )
                     snippet = qp_raw[:1200] + ("\n... [content continues]" if len(qp_raw) > 1200 else "")
                     st.text_area("Extracted Question Paper Text", value=snippet, height=180, disabled=True)
                 except Exception as qp_err:
@@ -174,8 +253,9 @@ def render_upload_page():
         )
         if rubric_file:
             st.session_state["rubric_file"] = rubric_file
+            save_uploaded_batch(current_sid, rubric_file=rubric_file)
             size_kb = rubric_file.size / 1024
-            st.success(f"✅ Loaded **{rubric_file.name}** ({size_kb:.1f} KB)")
+            st.success(f"✅ Loaded & Saved **{rubric_file.name}** ({size_kb:.1f} KB)")
 
         if st.session_state.get("parsed_rubric"):
             parsed = st.session_state["parsed_rubric"]
@@ -243,8 +323,23 @@ def render_upload_page():
                             question_paper_filename=qp_name,
                         )
                         st.session_state["parsed_rubric"] = parsed_rubric
+
+                        # Persist session and rubric to database
+                        save_or_update_session(
+                            session_id=current_sid,
+                            exam_title=parsed_rubric.exam_title or "Examination",
+                            subject=parsed_rubric.subject,
+                            total_marks=parsed_rubric.total_marks,
+                            instructions=parsed_rubric.instructions,
+                            rubric=parsed_rubric,
+                            question_paper_filename=qp_name,
+                            question_paper_text=parsed_rubric.question_paper_text,
+                            rubric_filename=r_name,
+                            status="parsed",
+                        )
+
                         st.success(
-                            f"✅ Exam scheme parsed! Found **{len(parsed_rubric.questions)}** "
+                            f"✅ Exam scheme parsed & saved to database! Found **{len(parsed_rubric.questions)}** "
                             f"questions totalling **{parsed_rubric.total_marks}** marks."
                         )
                         # Auto navigate to rubric review

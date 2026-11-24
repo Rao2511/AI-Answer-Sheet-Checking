@@ -36,3 +36,9 @@ ENV/
 *.zip
 grading_report.xlsx
 grading_report.csv
+
+# SQLite Local Database & Uploads
+data/
+*.db
+*.sqlite
+*.sqlite3

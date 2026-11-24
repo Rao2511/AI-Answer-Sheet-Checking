@@ -110,8 +110,10 @@ def render_grading_page():
         # Update rubric total
         rubric.total_marks = float(configured_total)
         # Initialize a fresh grading session
+        current_sid = st.session_state.get("session_id") or str(uuid.uuid4())[:8]
+        st.session_state["session_id"] = current_sid
         session = GradingSession(
-            session_id=str(uuid.uuid4())[:8],
+            session_id=current_sid,
             exam_rubric=rubric,
         )
 
@@ -119,6 +121,8 @@ def render_grading_page():
         status_container = st.container()
 
         errors = []
+
+        from core.database import save_student_evaluation, save_entire_grading_session
 
         for i, pdf in enumerate(pdfs):
             student_label = pdf.name.replace(".pdf", "").replace("_", " ")
@@ -157,8 +161,9 @@ def render_grading_page():
                 if not result.student_name_or_id:
                     result.student_name_or_id = student_label
 
-                # Add to session
+                # Add to session & persist to database in real-time
                 session.add_result(result)
+                save_student_evaluation(current_sid, result)
 
                 with status_container:
                     status_msg.success(
@@ -173,7 +178,8 @@ def render_grading_page():
                 with status_container:
                     status_msg.error(f"❌ {error_msg}")
 
-        # Store session and results in state
+        # Store session and results in state and database
+        save_entire_grading_session(session)
         st.session_state["grading_session"] = session
         st.session_state["grading_errors"] = errors
         st.session_state["pdf_bytes_map"] = {

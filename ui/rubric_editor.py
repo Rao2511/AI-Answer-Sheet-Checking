@@ -112,4 +112,18 @@ def render_rubric_editor():
         rubric.instructions = instructions if instructions else None
         rubric.questions = updated_questions
         st.session_state['parsed_rubric'] = rubric
-        st.success("Rubric updated successfully!")
+
+        # Save changes to database
+        from core.database import save_or_update_session
+        current_sid = st.session_state.get("session_id", "default")
+        save_or_update_session(
+            session_id=current_sid,
+            exam_title=exam_title,
+            subject=subject,
+            total_marks=total_marks,
+            instructions=instructions if instructions else None,
+            rubric=rubric,
+            question_paper_text=getattr(rubric, "question_paper_text", None),
+            status="parsed",
+        )
+        st.success("✅ Rubric updated and saved to database!")

@@ -61,7 +61,17 @@ def render_review_page():
                         q.confidence_score = 1.0 # Resolve flag
                         student.total_marks_awarded = sum(x.marks_awarded for x in student.results)
                         student.compute_percentage()
-                        st.success("Saved!")
+
+                        # Persist override to database
+                        from core.database import update_question_override
+                        update_question_override(
+                            session_id=session.session_id,
+                            student_name_or_id=student.student_name_or_id,
+                            question_number=str(q.question_number),
+                            new_marks=new_score,
+                            confidence=1.0,
+                        )
+                        st.success("Saved & Updated in Database!")
                         st.rerun()
                         
     if st.button("Approve All Remaining", type="primary"):
@@ -71,5 +81,9 @@ def render_review_page():
                 q.confidence_score = 1.0
             student.total_marks_awarded = sum(x.marks_awarded for x in student.results)
             student.compute_percentage()
-        st.success("All answers approved!")
+
+        # Persist all updates to database
+        from core.database import save_entire_grading_session
+        save_entire_grading_session(session)
+        st.success("All answers approved and saved to database!")
         st.rerun()
