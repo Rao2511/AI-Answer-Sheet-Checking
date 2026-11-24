@@ -104,12 +104,13 @@ section[data-testid="stSidebar"] hr {
     margin: 1rem 0 !important;
 }
 
-/* Search input in sidebar */
-section[data-testid="stSidebar"] input[type="text"] {
-    border-radius: 9999px !important;
+/* Sidebar text inputs (API keys, endpoints) */
+section[data-testid="stSidebar"] input[type="text"],
+section[data-testid="stSidebar"] input[type="password"] {
+    border-radius: 10px !important;
     background: #f8fafc !important;
     border: 1px solid #e2e8f0 !important;
-    padding: 0.55rem 1rem !important;
+    padding: 0.55rem 0.85rem !important;
     font-size: 0.85rem !important;
     color: #334155 !important;
     margin-bottom: 6px !important;
@@ -148,7 +149,7 @@ section[data-testid="stSidebar"] .stButton > button:hover {
     transform: translateX(2px) !important;
 }
 
-/* Active Navigation Item (Matches upGrad Admin Portal Screenshot) */
+/* Active Navigation Item (Matches upGrad Design System) */
 section[data-testid="stSidebar"] .stButton > button[kind="primary"] {
     background: #eb1c24 !important;
     background: linear-gradient(135deg, #eb1c24 0%, #d4141c 100%) !important;
@@ -163,31 +164,6 @@ section[data-testid="stSidebar"] .stButton > button[kind="primary"]:hover {
     background: #c81018 !important;
     color: #ffffff !important;
     transform: none !important;
-}
-
-/* ─── upGrad Admin Portal Hero Components ──────────────────────────────── */
-.upgrad-hero-stat {
-    font-size: 3.4rem !important;
-    font-weight: 900 !important;
-    color: #eb1c24 !important;
-    letter-spacing: -0.03em !important;
-    line-height: 1.1 !important;
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
-}
-
-.upgrad-hero-sub {
-    font-size: 1.55rem !important;
-    font-weight: 800 !important;
-    color: #0f172a !important;
-    letter-spacing: -0.02em !important;
-    margin-top: 4px !important;
-}
-
-.upgrad-hero-desc {
-    font-size: 0.95rem !important;
-    color: #475569 !important;
-    margin-top: 4px !important;
-    line-height: 1.5 !important;
 }
 
 /* ─── White & Red Glass Cards ─────────────────────────────────────────── */

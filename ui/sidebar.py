@@ -335,7 +335,7 @@ def render_sidebar():
 
         st.divider()
 
-        # ── 5. Live Portal Status ──────────────────────────────────────
+        # ── 5. Live Status ─────────────────────────────────────────────
         st.markdown(
             "<p style='font-size:0.72rem; color:#94a3b8; font-weight:700; "
             "text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;'>📊 Live Status</p>",

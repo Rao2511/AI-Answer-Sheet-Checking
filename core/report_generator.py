@@ -341,7 +341,7 @@ def generate_student_report_card_pdf(
         p.draw_line(fitz.Point(30, page_height - 35), fitz.Point(page_width - 30, page_height - 35), color=(0.8, 0.8, 0.85), width=0.5)
         p.insert_text(
             fitz.Point(30, page_height - 20),
-            "upGrad School of Technology  |  AI Examination Evaluation Portal  |  Verified by Faculty",
+            "upGrad School of Technology  |  Answer Sheet Grader  |  Verified by Faculty",
             fontsize=8,
             color=(0.5, 0.5, 0.6),
             fontname="helv"
