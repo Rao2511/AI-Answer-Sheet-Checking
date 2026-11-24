@@ -677,7 +677,7 @@ def test_api_connection(
                     else:
                         return (
                             True,
-                            f"Connected to Local Ollama at {cand}, but no models are downloaded yet. Run `ollama run qwen2.5-vl` in your Terminal to download a model.",
+                            f"Connected to Local Ollama at {cand}, but no models are downloaded yet. Run `ollama pull qwen2.5vl:7b` in your Terminal to download a model.",
                             OLLAMA_DEFAULT_MODELS,
                         )
             except urllib.error.URLError as e:
@@ -688,13 +688,25 @@ def test_api_connection(
                 continue
 
         reason = str(getattr(last_err, "reason", last_err)) if last_err else "Connection failed"
+        is_loopback = any(h in clean_endpoint for h in ["127.0.0.1", "localhost", "0.0.0.0"])
+        cloud_warning = ""
+        if is_loopback:
+            cloud_warning = (
+                "⚠️ **Accessing from Streamlit Cloud (`*.streamlit.app`)?**\n"
+                "The cloud server cannot reach your MacBook's `127.0.0.1`! To resolve:\n"
+                "• **Option 1 (Run Locally):** Open **http://localhost:8501** in your browser where your Mac's Ollama is running.\n"
+                "• **Option 2 (Cloud AI):** Switch to **🟢 Google Gemini** above (free 1,500 evals/day, zero setup).\n"
+                "• **Option 3 (Public Tunnel):** Run `ngrok http 11434` on your Mac and paste the public https URL into the Ollama Endpoint field.\n\n"
+            )
+
         return (
             False,
             f"Cannot connect to Local Ollama at {clean_endpoint} ({reason}).\n\n"
+            f"{cloud_warning}"
             "💡 How to setup Local Offline ML on your Mac:\n"
-            "1. Download Ollama: https://ollama.com/download (or run in Terminal: `curl -fsSL https://ollama.com/install.sh | sh`)\n"
+            "1. Download Ollama: https://ollama.com/download\n"
             "2. Open the Ollama App from Applications (or run `ollama serve`)\n"
-            "3. In Terminal, pull a Vision model: `ollama run qwen2.5-vl` (or `ollama run llama3.2-vision`)\n\n"
+            "3. In Terminal, pull a Vision model: `ollama pull qwen2.5vl:7b` (or `ollama pull llama3.2-vision`)\n\n"
             "💡 Or Use Google Gemini (100% Free, Zero Setup):\n"
             "Switch to '🟢 Google Gemini' above. Google provides 1,500 free evaluations per day at https://aistudio.google.com/apikey without installing anything locally.",
             OLLAMA_DEFAULT_MODELS,
