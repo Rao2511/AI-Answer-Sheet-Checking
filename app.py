@@ -72,6 +72,10 @@ def init_session_state():
         st.session_state['uploaded_pdfs'] = []
     if 'rubric_file' not in st.session_state:
         st.session_state['rubric_file'] = None
+    if 'question_paper_file' not in st.session_state:
+        st.session_state['question_paper_file'] = None
+    if 'question_paper_text' not in st.session_state:
+        st.session_state['question_paper_text'] = None
     if 'parsed_rubric' not in st.session_state:
         st.session_state['parsed_rubric'] = None
     if 'grading_session' not in st.session_state:

@@ -122,6 +122,19 @@ def _build_fallback_rubric(raw_text: str) -> ExamRubric:
     )
 
 
+def extract_text_from_file_bytes(file_bytes: bytes, filename: str) -> str:
+    """
+    Extracts raw text from either a PDF or DOCX file.
+    """
+    ext = os.path.splitext(filename.lower())[1]
+    if ext == '.pdf':
+        return _extract_text_from_pdf(file_bytes)
+    elif ext == '.docx':
+        return _extract_text_from_docx(file_bytes)
+    else:
+        raise ValueError(f"Unsupported file format: {ext}. Only .pdf and .docx are supported.")
+
+
 def _structure_rubric_with_ai(
     raw_text: str,
     api_key: str,
@@ -129,29 +142,68 @@ def _structure_rubric_with_ai(
     workspace_id: Optional[str] = None,
     provider: Optional[str] = None,
     endpoint: Optional[str] = None,
+    question_paper_text: Optional[str] = None,
 ) -> ExamRubric:
     """
-    Converts raw text into a structured ExamRubric object using Claude, Gemini, or Local Ollama.
-    Incorporates token-budget prompts and JSON repair.
+    Converts raw text (rubric, question paper, or both) into a structured ExamRubric object using Claude, Gemini, or Local Ollama.
+    Incorporates token-budget prompts, cross-referencing, and JSON repair.
     """
     try:
-        # Limit raw text if extraordinarily long
-        trimmed_text = raw_text[:35000] if len(raw_text) > 35000 else raw_text
+        trimmed_rubric = raw_text[:25000] if len(raw_text) > 25000 else raw_text
+        trimmed_qp = question_paper_text[:25000] if (question_paper_text and len(question_paper_text) > 25000) else question_paper_text
 
-        prompt = (
-            "You are an expert academic evaluator. Extract the grading rubric from the following document into structured JSON.\n"
-            "Requirements:\n"
-            "1. Extract the 'exam_title', 'subject', 'total_marks', and all questions.\n"
-            "2. For each question:\n"
-            "   - 'question_number': string (e.g. '1', '2a', '3')\n"
-            "   - 'question_type': exactly one of ['mcq', 'subjective', 'numerical', 'mathematical']\n"
-            "   - 'max_marks': number (float)\n"
-            "   - 'model_answer': brief correct solution or expected answer\n"
-            "   - 'criteria': list of 1-4 concise grading steps (step_description, allocated_marks, keywords_or_formula)\n"
-            "3. Keep all descriptions brief and concise to stay within output limits.\n"
-            "4. Make sure total_marks matches the sum of question max_marks.\n\n"
-            f"Document Text:\n{trimmed_text}"
-        )
+        if trimmed_qp and trimmed_rubric:
+            prompt = (
+                "You are an expert academic evaluator. You are provided with TWO documents for this examination:\n"
+                "1) The Official Question Paper\n"
+                "2) The Grading Rubric / Marking Scheme\n\n"
+                "Requirements:\n"
+                "1. Cross-reference both documents to extract an exhaustive, structured ExamRubric JSON.\n"
+                "2. Extract 'exam_title', 'subject', and 'total_marks'.\n"
+                "3. For each question:\n"
+                "   - 'question_number': string (e.g. '1', '2a', '3.i') matching both documents\n"
+                "   - 'question_type': exactly one of ['mcq', 'subjective', 'numerical', 'mathematical']\n"
+                "   - 'question_text': exact question statement/prompt, options (if MCQ), and constraints from the Question Paper\n"
+                "   - 'max_marks': number (float) matching the exam paper/rubric\n"
+                "   - 'model_answer': the correct solution or model answer from the rubric\n"
+                "   - 'criteria': list of 1-4 concise grading steps (step_description, allocated_marks, keywords_or_formula)\n"
+                "4. Keep descriptions concise to stay within token limits.\n"
+                "5. Make sure total_marks matches the exam total.\n\n"
+                f"### OFFICIAL QUESTION PAPER:\n{trimmed_qp}\n\n"
+                f"### GRADING RUBRIC / MARKING SCHEME:\n{trimmed_rubric}"
+            )
+        elif trimmed_qp:
+            prompt = (
+                "You are an expert academic evaluator. You are provided with the Official Question Paper for this examination.\n"
+                "Requirements:\n"
+                "1. Extract all questions and synthesize a high-quality Grading Rubric in structured JSON.\n"
+                "2. Extract 'exam_title', 'subject', and 'total_marks'.\n"
+                "3. For each question:\n"
+                "   - 'question_number': string (e.g. '1', '2a', '3')\n"
+                "   - 'question_type': exactly one of ['mcq', 'subjective', 'numerical', 'mathematical']\n"
+                "   - 'question_text': exact question statement, options (if MCQ), and constraints from the Question Paper\n"
+                "   - 'max_marks': number (float) as indicated on the paper (default to 5.0 if not specified)\n"
+                "   - 'model_answer': expert correct answer or solution\n"
+                "   - 'criteria': 1-4 step-by-step grading criteria allocating marks\n"
+                "4. Make sure total_marks matches the sum of question max_marks.\n\n"
+                f"### OFFICIAL QUESTION PAPER:\n{trimmed_qp}"
+            )
+        else:
+            prompt = (
+                "You are an expert academic evaluator. Extract the grading rubric from the following document into structured JSON.\n"
+                "Requirements:\n"
+                "1. Extract the 'exam_title', 'subject', 'total_marks', and all questions.\n"
+                "2. For each question:\n"
+                "   - 'question_number': string (e.g. '1', '2a', '3')\n"
+                "   - 'question_type': exactly one of ['mcq', 'subjective', 'numerical', 'mathematical']\n"
+                "   - 'question_text': brief question statement if mentioned in the rubric\n"
+                "   - 'max_marks': number (float)\n"
+                "   - 'model_answer': brief correct solution or expected answer\n"
+                "   - 'criteria': list of 1-4 concise grading steps (step_description, allocated_marks, keywords_or_formula)\n"
+                "3. Keep all descriptions brief and concise to stay within output limits.\n"
+                "4. Make sure total_marks matches the sum of question max_marks.\n\n"
+                f"Document Text:\n{trimmed_rubric}"
+            )
 
         from core.ai_client import is_claude_key, is_local_provider
         if is_local_provider(provider, api_key):
@@ -172,49 +224,61 @@ def _structure_rubric_with_ai(
         )
 
         try:
-            return ExamRubric.model_validate_json(json_text)
+            rubric_obj = ExamRubric.model_validate_json(json_text)
         except Exception:
             repaired = repair_truncated_json(json_text, validator=ExamRubric.model_validate_json)
-            return ExamRubric.model_validate_json(repaired)
+            rubric_obj = ExamRubric.model_validate_json(repaired)
+
+        if question_paper_text:
+            rubric_obj.question_paper_text = question_paper_text
+        return rubric_obj
 
     except Exception as e:
         _safe_log(f"[RUBRIC_PARSER] AI structuring encountered an error: {e}. Trying fallback parser...")
         try:
-            return _build_fallback_rubric(raw_text)
+            fallback = _build_fallback_rubric(raw_text or question_paper_text or "")
+            if question_paper_text:
+                fallback.question_paper_text = question_paper_text
+            return fallback
         except Exception as fb_err:
             raise RuntimeError(f"Failed to structure rubric with AI: {e}")
 
 
 def parse_rubric_document(
-    file_bytes: bytes,
-    filename: str,
-    api_key: str,
+    file_bytes: Optional[bytes] = None,
+    filename: Optional[str] = None,
+    api_key: str = "",
     model_name: Optional[str] = None,
     workspace_id: Optional[str] = None,
     provider: Optional[str] = None,
     endpoint: Optional[str] = None,
+    question_paper_bytes: Optional[bytes] = None,
+    question_paper_filename: Optional[str] = None,
 ) -> ExamRubric:
     """
-    Main entry point to parse a rubric document and return a structured ExamRubric.
-    Delegates to PDF or DOCX extractors based on the file extension.
+    Main entry point to parse examination documents (Rubric Document, Question Paper, or both)
+    and return a structured ExamRubric.
     """
-    ext = os.path.splitext(filename.lower())[1]
-    
-    if ext == '.pdf':
-        raw_text = _extract_text_from_pdf(file_bytes)
-    elif ext == '.docx':
-        raw_text = _extract_text_from_docx(file_bytes)
-    else:
-        raise ValueError(f"Unsupported file format: {ext}. Only .pdf and .docx are supported.")
+    if not file_bytes and not question_paper_bytes:
+        raise ValueError("Please provide at least a Question Paper or a Rubric Document.")
 
-    if not raw_text.strip():
-        raise ValueError("No text could be extracted from the document.")
+    rubric_text = ""
+    if file_bytes and filename:
+        rubric_text = extract_text_from_file_bytes(file_bytes, filename)
+
+    qp_text = ""
+    if question_paper_bytes and question_paper_filename:
+        qp_text = extract_text_from_file_bytes(question_paper_bytes, question_paper_filename)
+
+    if not rubric_text.strip() and not qp_text.strip():
+        raise ValueError("No text could be extracted from the uploaded document(s).")
 
     return _structure_rubric_with_ai(
-        raw_text,
-        api_key,
+        raw_text=rubric_text,
+        api_key=api_key,
         model_name=model_name,
         workspace_id=workspace_id,
         provider=provider,
         endpoint=endpoint,
+        question_paper_text=qp_text if qp_text.strip() else None,
     )

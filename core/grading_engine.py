@@ -10,14 +10,22 @@ from core.ai_client import generate_content_with_fallback
 
 def _build_grading_prompt(rubric: ExamRubric) -> str:
     """
-    Builds the detailed system/grading prompt with specialized Handwriting Text Recognition (HTR) directives.
+    Builds the detailed system/grading prompt with specialized Handwriting Text Recognition (HTR) directives
+    and official Question Paper verification.
     """
     rubric_json = rubric.model_dump_json(indent=2)
+    
+    qp_section = ""
+    if getattr(rubric, "question_paper_text", None):
+        qp_section = (
+            f"### OFFICIAL EXAMINATION QUESTION PAPER (QUESTIONS, OPTIONS & PROMPTS):\n"
+            f"{rubric.question_paper_text[:14000]}\n\n"
+        )
     
     prompt = (
         "You are an expert AI Automated Handwriting Evaluator and Academic Grader.\n"
         "The attached images show a REAL STUDENT'S HANDWRITTEN EXAM ANSWER SHEET.\n\n"
-        "### SPECIALIZED HANDWRITING RECOGNITION (HTR) DIRECTIVES:\n"
+        "### SPECIALIZED HANDWRITING RECOGNITION (HTR) & EVALUATION DIRECTIVES:\n"
         "1. **Read Imperfect, Cursive, and Slanted Handwriting**: Student handwriting is written in blue/black pen or pencil. "
         "It may be cursive, connected, casual, faint, or slightly messy. Decipher every word and stroke carefully using word shapes, stroke trajectories, and context.\n"
         "2. **Search All Regions of Every Page**: Students write answer markers in varied styles: 'Q1', 'Ans 1', '1.', '(a)', 'i)', 'Question 1', "
@@ -28,8 +36,11 @@ def _build_grading_prompt(rubric: ExamRubric) -> str:
         "Award partial credit generously for correct working and principles even if final calculations have arithmetic slips.\n"
         "5. **MCQs**: Identify circled, ticked, underlined, or written option letters (A, B, C, D).\n"
         "6. **Bounding Box**: For each answer, provide its 2D bounding box `box_2d` in `[ymin, xmin, ymax, xmax]` normalized to 0-1000 scale and specify the correct `page_number` (1-indexed).\n"
-        "7. **Fair Grading & Partial Credit**: Award marks for every rubric criterion demonstrated by the student's handwritten response.\n\n"
-        "### Official Exam Rubric (JSON):\n"
+        "7. **Fair Grading & Partial Credit**: Award marks for every rubric criterion demonstrated by the student's handwritten response.\n"
+        "8. **Question Paper Verification**: Verify that the student's answer corresponds to the exact question asked in the Question Paper, "
+        "checking all sub-parts (e.g. (a), (b), (i), (ii)), constraints, problem statements, and requirements.\n\n"
+        f"{qp_section}"
+        "### Official Exam Rubric & Marking Scheme (JSON):\n"
         f"{rubric_json}\n"
     )
     return prompt

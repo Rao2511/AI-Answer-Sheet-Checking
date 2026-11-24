@@ -58,6 +58,16 @@ def render_rubric_editor():
             
         instructions = st.text_area("General Instructions", value=rubric.instructions or "")
 
+        if getattr(rubric, "question_paper_text", None):
+            with st.expander("📑 View Official Question Paper Reference", expanded=False):
+                st.text_area(
+                    "Official Question Paper Text",
+                    value=rubric.question_paper_text,
+                    height=200,
+                    disabled=True,
+                    help="Extracted question paper text used by the AI evaluator."
+                )
+
     st.divider()
     st.subheader("Questions")
     

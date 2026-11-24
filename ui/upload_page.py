@@ -14,21 +14,22 @@ def render_upload_page():
                 📤 Upload Examination Documents
             </div>
             <div style="font-size: 0.92rem; color: #64748b; margin-top: 6px;">
-                Upload scanned student answer sheets (.pdf) and the examination grading rubric scheme (.docx or .pdf).
+                Upload scanned student answer sheets (.pdf), official question paper (.pdf / .docx), and examination grading rubric scheme (.docx / .pdf).
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
 
+    # ── Column 1: Student Answer Sheets ───────────────────────────────
     with col1:
         st.markdown(
             """
             <div class="glass-card">
                 <h3>📄 Answer Sheets</h3>
-                <p style="color: #aaa;">Upload PDF files — one per student</p>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Upload PDF files — one per student</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -48,8 +49,8 @@ def render_upload_page():
                     size_kb = pdf.size / 1024
                     st.markdown(
                         f"<div style='padding:8px 14px; margin:5px 0; "
-                        f"background:rgba(225, 29, 72, 0.05); border-radius:10px; "
-                        f"border-left:3px solid #e11d48; color:#0f172a;'>"
+                        f"background:rgba(235, 28, 36, 0.05); border-radius:10px; "
+                        f"border-left:3px solid #eb1c24; color:#0f172a;'>"
                         f"📄 <strong>{pdf.name}</strong> — {size_kb:.1f} KB</div>",
                         unsafe_allow_html=True,
                     )
@@ -90,7 +91,7 @@ def render_upload_page():
                     )
 
                 with test_col:
-                    if st.button("🔍 Test Handwriting Transcription", key="btn_test_ocr", use_container_width=True):
+                    if st.button("🔍 Test Transcription", key="btn_test_ocr", use_container_width=True):
                         api_key = st.session_state.get("api_key", "")
                         model_name = st.session_state.get("selected_model")
                         ws_id = st.session_state.get("workspace_id", "")
@@ -113,12 +114,54 @@ def render_upload_page():
                                 st.markdown("##### 📝 Transcribed Text:")
                                 st.info(transcript)
 
+    # ── Column 2: Question Paper ─────────────────────────────────────
     with col2:
         st.markdown(
             """
             <div class="glass-card">
+                <h3>📑 Question Paper</h3>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Upload exam paper (.pdf or .docx)</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        question_paper_file = st.file_uploader(
+            "Drag and drop question paper here",
+            type=["pdf", "docx"],
+            key="qp_uploader",
+            help="Upload official question paper. The AI extracts exact question wording, options, and constraints.",
+        )
+        if question_paper_file:
+            st.session_state["question_paper_file"] = question_paper_file
+            qp_size_kb = question_paper_file.size / 1024
+            st.success(f"✅ Loaded **{question_paper_file.name}** ({qp_size_kb:.1f} KB)")
+
+            with st.expander("👁️ Preview Question Paper Content", expanded=False):
+                from core.rubric_parser import extract_text_from_file_bytes
+                try:
+                    qp_raw = extract_text_from_file_bytes(question_paper_file.getvalue(), question_paper_file.name)
+                    st.session_state["question_paper_text"] = qp_raw
+                    snippet = qp_raw[:1200] + ("\n... [content continues]" if len(qp_raw) > 1200 else "")
+                    st.text_area("Extracted Question Paper Text", value=snippet, height=180, disabled=True)
+                except Exception as qp_err:
+                    st.warning(f"Could not extract preview: {qp_err}")
+        else:
+            st.markdown(
+                """
+                <div style="padding: 10px 12px; background: #f8fafc; border-radius: 8px; border: 1px dashed #cbd5e1; font-size: 0.78rem; color: #64748b; margin-top: 8px;">
+                    💡 <strong>Evaluation Tip:</strong> Uploading the Question Paper gives the AI the exact questions, options, and sub-parts to evaluate student answers with highest accuracy.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    # ── Column 3: Rubric Scheme ──────────────────────────────────────
+    with col3:
+        st.markdown(
+            """
+            <div class="glass-card">
                 <h3>📋 Rubric Document</h3>
-                <p style="color: #aaa;">Upload your marking scheme (.docx or .pdf)</p>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Upload marking scheme (.docx or .pdf)</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -127,6 +170,7 @@ def render_upload_page():
             "Drag and drop rubric here",
             type=["docx", "pdf"],
             key="rubric_uploader",
+            help="Marking scheme with model solutions and criteria. If omitted, AI will generate it from the Question Paper.",
         )
         if rubric_file:
             st.session_state["rubric_file"] = rubric_file
@@ -136,10 +180,11 @@ def render_upload_page():
         if st.session_state.get("parsed_rubric"):
             parsed = st.session_state["parsed_rubric"]
             q_sum = sum(float(q.max_marks) for q in parsed.questions)
+            qp_indicator = " + Question Paper ✓" if getattr(parsed, "question_paper_text", None) else ""
             st.markdown(
                 f"""
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #e11d48; padding:10px 14px; border-radius:6px; margin-top:10px;">
-                    <div style="font-weight:700; color:#0f172a; font-size:0.88rem;">📋 Rubric Active: {parsed.exam_title or 'Exam'}</div>
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #eb1c24; padding:10px 14px; border-radius:6px; margin-top:10px;">
+                    <div style="font-weight:700; color:#0f172a; font-size:0.88rem;">📋 Rubric Active: {parsed.exam_title or 'Exam'}{qp_indicator}</div>
                     <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">
                         <b>{len(parsed.questions)}</b> questions &bull; Detected questions sum: <b>{q_sum:.1f}</b> marks
                     </div>
@@ -161,42 +206,49 @@ def render_upload_page():
 
     st.divider()
 
-    # Parse Rubric Button
-    col_btn, _, _ = st.columns([1, 1, 2])
+    # Parse Rubric & Question Paper Button
+    col_btn, _, _ = st.columns([1.5, 1, 2])
     with col_btn:
-        if st.button("⚙️ Parse Rubric", type="primary", use_container_width=True):
+        if st.button("⚙️ Parse Rubric & Question Paper", type="primary", use_container_width=True):
             rubric_file = st.session_state.get("rubric_file")
+            qp_file = st.session_state.get("question_paper_file")
             api_key = st.session_state.get("api_key", "")
             provider = st.session_state.get("ai_provider", "Anthropic Claude")
             endpoint = st.session_state.get("ollama_endpoint", "http://localhost:11434")
             ws_id = st.session_state.get("workspace_id", "")
             is_local = "Local" in provider or "Ollama" in provider or api_key == "local"
 
-            if not rubric_file:
-                st.error("❌ Please upload a rubric document first.")
+            if not rubric_file and not qp_file:
+                st.error("❌ Please upload at least a Question Paper or a Rubric Document.")
             elif not is_local and not api_key:
                 st.error("❌ Please enter your API Key in the sidebar.")
             else:
-                with st.spinner("🔍 Analyzing rubric document with AI..."):
+                with st.spinner("🔍 Analyzing examination documents & building evaluation rubric with AI..."):
                     try:
-                        file_bytes = rubric_file.getvalue()
+                        r_bytes = rubric_file.getvalue() if rubric_file else None
+                        r_name = rubric_file.name if rubric_file else None
+                        qp_bytes = qp_file.getvalue() if qp_file else None
+                        qp_name = qp_file.name if qp_file else None
                         model_to_use = st.session_state.get("selected_model")
+
                         parsed_rubric = parse_rubric_document(
-                            file_bytes=file_bytes,
-                            filename=rubric_file.name,
+                            file_bytes=r_bytes,
+                            filename=r_name,
                             api_key=api_key or "local",
                             model_name=model_to_use,
                             workspace_id=ws_id,
                             provider=provider,
                             endpoint=endpoint,
+                            question_paper_bytes=qp_bytes,
+                            question_paper_filename=qp_name,
                         )
                         st.session_state["parsed_rubric"] = parsed_rubric
                         st.success(
-                            f"✅ Rubric parsed! Found **{len(parsed_rubric.questions)}** "
+                            f"✅ Exam scheme parsed! Found **{len(parsed_rubric.questions)}** "
                             f"questions totalling **{parsed_rubric.total_marks}** marks."
                         )
                         # Auto navigate to rubric review
                         st.session_state["current_page"] = "rubric_review"
                         st.rerun()
                     except Exception as e:
-                        st.error(f"❌ Error parsing rubric: {str(e)}")
+                        st.error(f"❌ Error parsing documents: {str(e)}")

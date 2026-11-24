@@ -343,9 +343,11 @@ def render_sidebar():
         )
 
         pdfs = st.session_state.get("uploaded_pdfs", [])
+        qp_file = st.session_state.get("question_paper_file")
         rubric = st.session_state.get("parsed_rubric")
 
         _status_item("Answer Sheets", f"{len(pdfs)} loaded" if pdfs else "Pending", bool(pdfs))
+        _status_item("Question Paper", "Loaded ✓" if qp_file else "Optional", bool(qp_file))
         _status_item("Rubric Scheme", "Ready ✓" if rubric else "Not parsed", bool(rubric))
         if session and session.student_results:
             _status_item("Grading Status", f"{session.total_students} completed", True)

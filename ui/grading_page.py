@@ -46,11 +46,15 @@ def render_grading_page():
 
     # Summary metrics
     st.markdown("### 📊 Grading Summary")
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric("📄 Students", num_students)
     col2.metric("❓ Questions", num_questions)
     col3.metric("📝 Total Marks", f"{current_total:.1f}")
-    col4.metric("🤖 AI Model", selected_model_name)
+    col4.metric("📑 Question Paper", "Active ✓" if getattr(rubric, "question_paper_text", None) else "Optional")
+    col5.metric("🤖 AI Model", selected_model_name)
+
+    if getattr(rubric, "question_paper_text", None):
+        st.info("📑 **Official Question Paper Active**: AI evaluator will cross-verify student answers directly against the original question paper prompts, options, and constraints.")
 
     st.markdown("#### 🎯 Exam Total Marks (Scored Out Of)")
     col_tm1, col_tm2 = st.columns([2, 1])

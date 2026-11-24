@@ -88,6 +88,10 @@ class ExamRubric(BaseModel):
     questions: List[QuestionRubric] = Field(
         description="List of all question rubrics"
     )
+    question_paper_text: Optional[str] = Field(
+        default=None,
+        description="Full text or content of the official Question Paper, if provided"
+    )
 
 
 # ─── Grading Result Models ───────────────────────────────────────────────────
