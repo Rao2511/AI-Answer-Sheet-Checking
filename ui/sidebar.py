@@ -223,9 +223,9 @@ def render_sidebar():
             )
             ollama_endpoint = st.text_input(
                 "Ollama Endpoint",
-                value=st.session_state.get("ollama_endpoint", "http://localhost:11434"),
-                placeholder="http://localhost:11434",
-                help="Local Ollama address (default: http://localhost:11434)",
+                value=st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434"),
+                placeholder="http://127.0.0.1:11434",
+                help="Local Ollama address (default: http://127.0.0.1:11434)",
                 key="input_ollama_endpoint",
             )
             if ollama_endpoint != st.session_state.get("ollama_endpoint"):
@@ -234,12 +234,22 @@ def render_sidebar():
             st.session_state["api_key"] = "local"
             active_key = "local"
 
-            with st.expander("🛠️ Setup Local AI Guide", expanded=False):
+            with st.expander("🛠️ How to Setup Local Offline ML", expanded=False):
                 st.markdown(
                     """
-                    <div style="font-size:0.73rem; color:#334155; line-height:1.4;">
-                    1. Install: <code>brew install ollama</code><br/>
-                    2. Run: <code>ollama run qwen2.5-vl</code>
+                    <div style="font-size:0.74rem; color:#334155; line-height:1.45;">
+                        <b>1. Install Ollama:</b><br/>
+                        • Download Mac App: <a href="https://ollama.com/download" target="_blank" style="color:#eb1c24; font-weight:600;">ollama.com/download</a><br/>
+                        • Or run in Terminal: <code>curl -fsSL https://ollama.com/install.sh | sh</code><br/><br/>
+                        <b>2. Start Ollama:</b><br/>
+                        Open <code>Ollama.app</code> from Applications or run <code>ollama serve</code><br/><br/>
+                        <b>3. Download Vision Model:</b><br/>
+                        Run in Terminal:<br/>
+                        <code>ollama run qwen2.5-vl</code><br/>
+                        <i>(or <code>ollama run llama3.2-vision</code>)</i><br/><br/>
+                        <div style="background:#f1f5f9; padding:6px 8px; border-radius:6px; margin-top:4px;">
+                            💡 <b>No Setup Alternative:</b> Switch to <b>🟢 Google Gemini</b> above for 1,500 free evaluations/day without installing anything on your Mac.
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True,

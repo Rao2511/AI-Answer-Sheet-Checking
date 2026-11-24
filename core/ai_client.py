@@ -44,7 +44,7 @@ OLLAMA_DEFAULT_MODELS = [
     "deepseek-r1:latest",
 ]
 
-DEFAULT_OLLAMA_ENDPOINT = "http://localhost:11434"
+DEFAULT_OLLAMA_ENDPOINT = "http://127.0.0.1:11434"
 
 
 def is_local_provider(provider: Optional[str] = None, api_key: Optional[str] = None) -> bool:
@@ -641,47 +641,63 @@ def test_api_connection(
     # 1. Local Offline (Ollama)
     if is_local_provider(provider, api_key):
         clean_endpoint = (endpoint or DEFAULT_OLLAMA_ENDPOINT).rstrip("/")
+        # Candidates for loopback addressing on macOS
+        candidates = [clean_endpoint]
+        if "localhost" in clean_endpoint:
+            candidates.append(clean_endpoint.replace("localhost", "127.0.0.1"))
+        elif "127.0.0.1" in clean_endpoint:
+            candidates.append(clean_endpoint.replace("127.0.0.1", "localhost"))
+
         import urllib.request
         import urllib.error
         import json
-        try:
-            req = urllib.request.Request(
-                f"{clean_endpoint}/api/tags",
-                headers={"Accept": "application/json"},
-            )
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                remote_models = [m["name"] for m in data.get("models", []) if "name" in m]
-                vision = [m for m in remote_models if any(v in m.lower() for v in ["vl", "vision", "llava", "minicpm"])]
-                others = [m for m in remote_models if m not in vision]
-                all_local = vision + others if remote_models else OLLAMA_DEFAULT_MODELS
 
-                if remote_models:
-                    model_list_preview = ", ".join(remote_models[:4])
-                    return (
-                        True,
-                        f"Connected to Local Ollama at {clean_endpoint}! Found {len(remote_models)} installed model(s) ({model_list_preview}).",
-                        all_local,
-                    )
-                else:
-                    return (
-                        True,
-                        f"Connected to Local Ollama at {clean_endpoint}, but no models are downloaded yet. Run `ollama run qwen2.5-vl` in your Terminal to download a model.",
-                        OLLAMA_DEFAULT_MODELS,
-                    )
-        except urllib.error.URLError as e:
-            reason = str(getattr(e, "reason", e))
-            return (
-                False,
-                f"Cannot connect to Local Ollama at {clean_endpoint} ({reason}).\n\n"
-                "💡 Quick Setup:\n"
-                "1. Install: `brew install ollama`\n"
-                "2. Start: run `ollama serve` or open the Ollama app\n"
-                "3. Download model: run `ollama run qwen2.5-vl`",
-                OLLAMA_DEFAULT_MODELS,
-            )
-        except Exception as e:
-            return False, f"Ollama connection error: {e}", OLLAMA_DEFAULT_MODELS
+        last_err = None
+        for cand in candidates:
+            try:
+                req = urllib.request.Request(
+                    f"{cand}/api/tags",
+                    headers={"Accept": "application/json"},
+                )
+                with urllib.request.urlopen(req, timeout=4) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    remote_models = [m["name"] for m in data.get("models", []) if "name" in m]
+                    vision = [m for m in remote_models if any(v in m.lower() for v in ["vl", "vision", "llava", "minicpm"])]
+                    others = [m for m in remote_models if m not in vision]
+                    all_local = vision + others if remote_models else OLLAMA_DEFAULT_MODELS
+
+                    if remote_models:
+                        model_list_preview = ", ".join(remote_models[:4])
+                        return (
+                            True,
+                            f"Connected to Local Ollama at {cand}! Found {len(remote_models)} installed model(s) ({model_list_preview}).",
+                            all_local,
+                        )
+                    else:
+                        return (
+                            True,
+                            f"Connected to Local Ollama at {cand}, but no models are downloaded yet. Run `ollama run qwen2.5-vl` in your Terminal to download a model.",
+                            OLLAMA_DEFAULT_MODELS,
+                        )
+            except urllib.error.URLError as e:
+                last_err = e
+                continue
+            except Exception as e:
+                last_err = e
+                continue
+
+        reason = str(getattr(last_err, "reason", last_err)) if last_err else "Connection failed"
+        return (
+            False,
+            f"Cannot connect to Local Ollama at {clean_endpoint} ({reason}).\n\n"
+            "💡 How to setup Local Offline ML on your Mac:\n"
+            "1. Download Ollama: https://ollama.com/download (or run in Terminal: `curl -fsSL https://ollama.com/install.sh | sh`)\n"
+            "2. Open the Ollama App from Applications (or run `ollama serve`)\n"
+            "3. In Terminal, pull a Vision model: `ollama run qwen2.5-vl` (or `ollama run llama3.2-vision`)\n\n"
+            "💡 Or Use Google Gemini (100% Free, Zero Setup):\n"
+            "Switch to '🟢 Google Gemini' above. Google provides 1,500 free evaluations per day at https://aistudio.google.com/apikey without installing anything locally.",
+            OLLAMA_DEFAULT_MODELS,
+        )
 
     if not api_key or not api_key.strip():
         return False, "API key is empty.", []

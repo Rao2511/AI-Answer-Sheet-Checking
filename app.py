@@ -55,7 +55,7 @@ def init_session_state():
         st.session_state['gemini_api_key'] = g_key
 
     if 'ollama_endpoint' not in st.session_state:
-        st.session_state['ollama_endpoint'] = os.getenv("OLLAMA_ENDPOINT", "http://localhost:11434")
+        st.session_state['ollama_endpoint'] = os.getenv("OLLAMA_ENDPOINT", "http://127.0.0.1:11434")
 
     # Active API key and selected model based on active provider
     if st.session_state['ai_provider'] == 'Local Offline (Ollama)':
