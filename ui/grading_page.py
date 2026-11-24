@@ -16,7 +16,7 @@ def render_grading_page():
     rubric = st.session_state.get("parsed_rubric")
     api_key = st.session_state.get("api_key", "")
     provider = st.session_state.get("ai_provider", "Anthropic Claude")
-    endpoint = st.session_state.get("ollama_endpoint", "http://localhost:11434")
+    endpoint = st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434")
     is_local = "Local" in provider or "Ollama" in provider or api_key == "local"
 
     if not pdfs:

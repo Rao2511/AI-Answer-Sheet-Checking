@@ -476,7 +476,7 @@ def _call_ollama_multimodal(
     images: List[bytes],
     response_schema: Type[BaseModel],
     preferred_model: str = "qwen2.5-vl:7b",
-    endpoint: str = "http://localhost:11434",
+    endpoint: str = "http://127.0.0.1:11434",
     max_retries: int = 2,
 ) -> str:
     """

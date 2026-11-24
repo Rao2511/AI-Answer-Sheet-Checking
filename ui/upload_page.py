@@ -168,7 +168,7 @@ def render_upload_page():
                         model_name = st.session_state.get("selected_model")
                         ws_id = st.session_state.get("workspace_id", "")
                         provider = st.session_state.get("ai_provider", "Anthropic Claude")
-                        endpoint = st.session_state.get("ollama_endpoint", "http://localhost:11434")
+                        endpoint = st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434")
                         is_local = "Local" in provider or "Ollama" in provider or api_key == "local"
                         if not is_local and not api_key:
                             st.warning("Please enter your API Key in the sidebar.")
@@ -294,7 +294,7 @@ def render_upload_page():
             qp_file = st.session_state.get("question_paper_file")
             api_key = st.session_state.get("api_key", "")
             provider = st.session_state.get("ai_provider", "Anthropic Claude")
-            endpoint = st.session_state.get("ollama_endpoint", "http://localhost:11434")
+            endpoint = st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434")
             ws_id = st.session_state.get("workspace_id", "")
             is_local = "Local" in provider or "Ollama" in provider or api_key == "local"
 

@@ -298,7 +298,7 @@ def render_sidebar():
         # Model Selection
         cached_m = st.session_state.get("cached_models")
         ws_id = os.getenv("ANTHROPIC_WORKSPACE_ID", "")
-        current_endpoint = st.session_state.get("ollama_endpoint", "http://localhost:11434")
+        current_endpoint = st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434")
 
         if cached_m:
             model_options = cached_m
