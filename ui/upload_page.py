@@ -168,16 +168,14 @@ def render_upload_page():
                         model_name = st.session_state.get("selected_model")
                         ws_id = st.session_state.get("workspace_id", "")
                         provider = st.session_state.get("ai_provider", "Anthropic Claude")
-                        endpoint = st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434")
-                        is_local = "Local" in provider or "Ollama" in provider or api_key == "local"
-                        if not is_local and not api_key:
+                        if not api_key:
                             st.warning("Please enter your API Key in the sidebar.")
                         else:
                             with st.spinner("🤖 Deciphering handwriting with AI..."):
                                 raw_images = [p.image_bytes for p in preview_pages]
                                 transcript = transcribe_handwritten_sheet(
                                     raw_images,
-                                    api_key or "local",
+                                    api_key,
                                     model_name=model_name,
                                     workspace_id=ws_id,
                                     provider=provider,
@@ -294,13 +292,11 @@ def render_upload_page():
             qp_file = st.session_state.get("question_paper_file")
             api_key = st.session_state.get("api_key", "")
             provider = st.session_state.get("ai_provider", "Anthropic Claude")
-            endpoint = st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434")
             ws_id = st.session_state.get("workspace_id", "")
-            is_local = "Local" in provider or "Ollama" in provider or api_key == "local"
 
             if not rubric_file and not qp_file:
                 st.error("❌ Please upload at least a Question Paper or a Rubric Document.")
-            elif not is_local and not api_key:
+            elif not api_key:
                 st.error("❌ Please enter your API Key in the sidebar.")
             else:
                 with st.spinner("🔍 Analyzing examination documents & building evaluation rubric with AI..."):
@@ -314,11 +310,10 @@ def render_upload_page():
                         parsed_rubric = parse_rubric_document(
                             file_bytes=r_bytes,
                             filename=r_name,
-                            api_key=api_key or "local",
+                            api_key=api_key,
                             model_name=model_to_use,
                             workspace_id=ws_id,
                             provider=provider,
-                            endpoint=endpoint,
                             question_paper_bytes=qp_bytes,
                             question_paper_filename=qp_name,
                         )

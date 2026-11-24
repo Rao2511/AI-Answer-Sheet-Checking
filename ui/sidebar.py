@@ -152,13 +152,8 @@ def render_sidebar():
             st.session_state["gemini_api_key"] = g_env
 
         raw_provider = st.session_state.get("ai_provider", "Anthropic Claude")
-        provider_options = ["🔴 Anthropic Claude", "🟢 Google Gemini", "💻 Local ML (Ollama)"]
-        if "Ollama" in raw_provider or "Local" in raw_provider:
-            provider_idx = 2
-        elif "Gemini" in raw_provider:
-            provider_idx = 1
-        else:
-            provider_idx = 0
+        provider_options = ["🔴 Anthropic Claude", "🟢 Google Gemini"]
+        provider_idx = 1 if "Gemini" in raw_provider else 0
 
         selected_label = st.radio(
             "Select AI Provider",
@@ -168,19 +163,12 @@ def render_sidebar():
             label_visibility="collapsed",
             key="radio_provider_selector",
         )
-        if "Local" in selected_label or "Ollama" in selected_label:
-            active_provider = "Local Offline (Ollama)"
-            is_local = True
-            is_claude = False
-            is_gemini = False
-        elif "Claude" in selected_label:
+        if "Claude" in selected_label:
             active_provider = "Anthropic Claude"
-            is_local = False
             is_claude = True
             is_gemini = False
         else:
             active_provider = "Google Gemini"
-            is_local = False
             is_claude = False
             is_gemini = True
 
@@ -188,10 +176,7 @@ def render_sidebar():
         if active_provider != st.session_state.get("ai_provider"):
             st.session_state["ai_provider"] = active_provider
             st.session_state.pop("cached_models", None)
-            if is_local:
-                st.session_state["api_key"] = "local"
-                st.session_state["selected_model"] = "qwen2.5vl:7b"
-            elif is_claude:
+            if is_claude:
                 st.session_state["api_key"] = st.session_state.get("claude_api_key", "")
                 st.session_state["selected_model"] = "claude-sonnet-5-5"
             else:
@@ -200,61 +185,7 @@ def render_sidebar():
             st.rerun()
 
         # Engine Settings
-        if is_local:
-            st.markdown(
-                """
-                <div style="
-                    background: rgba(16, 185, 129, 0.08);
-                    border: 1px solid rgba(16, 185, 129, 0.3);
-                    border-radius: 8px;
-                    padding: 8px 12px;
-                    margin-top: 6px;
-                    margin-bottom: 6px;
-                ">
-                    <div style="font-weight: 700; color: #047857; font-size: 0.76rem; display: flex; align-items: center; gap: 6px;">
-                        <span>💻</span> 100% Offline AI (Zero API Keys)
-                    </div>
-                    <div style="font-size: 0.70rem; color: #475569; margin-top: 3px; line-height: 1.35;">
-                        Runs on Mac GPU via local Ollama. Private and secure.
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            ollama_endpoint = st.text_input(
-                "Ollama Endpoint",
-                value=st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434"),
-                placeholder="http://127.0.0.1:11434",
-                help="Local Ollama address (default: http://127.0.0.1:11434)",
-                key="input_ollama_endpoint",
-            )
-            if ollama_endpoint != st.session_state.get("ollama_endpoint"):
-                st.session_state["ollama_endpoint"] = ollama_endpoint
-                st.session_state.pop("cached_models", None)
-            st.session_state["api_key"] = "local"
-            active_key = "local"
-
-            with st.expander("🛠️ How to Setup Local Offline ML", expanded=False):
-                st.markdown(
-                    """
-                    <div style="font-size:0.74rem; color:#334155; line-height:1.45;">
-                        <b>1. Ollama is Already Installed & Running!</b><br/>
-                        • Ollama daemon is running at <code>http://127.0.0.1:11434</code><br/><br/>
-                        <b>2. Download Vision Model in Terminal:</b><br/>
-                        Run in Terminal:<br/>
-                        <code>ollama pull qwen2.5vl:7b</code><br/>
-                        <i>(or <code>ollama pull qwen2.5vl:3b</code> for lower RAM, or <code>ollama pull llama3.2-vision</code>)</i><br/><br/>
-                        <b>3. Test Connection:</b><br/>
-                        Click <b>🔌 Test Local Connection</b> below to verify!<br/><br/>
-                        <div style="background:#f1f5f9; padding:6px 8px; border-radius:6px; margin-top:4px;">
-                            💡 <b>Zero-Download Cloud Alternative:</b> Switch to <b>🟢 Google Gemini</b> above for 1,500 free evaluations/day without needing multi-GB local downloads.
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        elif is_claude:
+        if is_claude:
             st.markdown(
                 "<p style='font-size:0.72rem; color:#64748b; font-weight:700; "
                 "text-transform:uppercase; letter-spacing:0.06em; margin-top:6px; margin-bottom:4px;'>🔴 Claude API Key</p>",
@@ -297,21 +228,18 @@ def render_sidebar():
         # Model Selection
         cached_m = st.session_state.get("cached_models")
         ws_id = os.getenv("ANTHROPIC_WORKSPACE_ID", "")
-        current_endpoint = st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434")
 
         if cached_m:
             model_options = cached_m
         else:
-            if is_local:
-                model_options = get_available_models("local", provider="Local Offline (Ollama)", endpoint=current_endpoint)
-            elif is_claude:
+            if is_claude:
                 model_options = get_available_models(active_key, provider="Anthropic Claude", workspace_id=ws_id) if active_key else CLAUDE_MODELS
             else:
                 model_options = get_available_models(active_key, provider="Google Gemini") if active_key else GEMINI_DEFAULT_MODELS
 
-        default_model = model_options[0] if model_options else ("qwen2.5-vl:7b" if is_local else ("claude-sonnet-5-5" if is_claude else "gemini-2.5-flash"))
+        default_model = model_options[0] if model_options else ("claude-sonnet-5-5" if is_claude else "gemini-2.5-flash")
         current_model = st.session_state.get("selected_model")
-        if not current_model or (is_local and not any(k in current_model for k in ["qwen", "llama", "llava", "minicpm", "deepseek"])) or (is_claude and "gemini" in current_model) or (is_gemini and "claude" in current_model):
+        if not current_model or (is_claude and "gemini" in current_model) or (is_gemini and "claude" in current_model):
             current_model = default_model
 
         selected_model = st.selectbox(
@@ -323,8 +251,8 @@ def render_sidebar():
         st.session_state["selected_model"] = selected_model
 
         # Test Connection Button
-        if is_local or active_key:
-            test_label = "🔌 Test Local Connection" if is_local else ("🔌 Test Claude" if is_claude else "🔌 Test Gemini")
+        if active_key:
+            test_label = "🔌 Test Claude" if is_claude else "🔌 Test Gemini"
             if st.button(test_label, use_container_width=True, key="btn_test_conn"):
                 with st.spinner("Testing connection..."):
                     ok, msg, discovered_models = test_api_connection(
@@ -332,7 +260,6 @@ def render_sidebar():
                         model_name=selected_model,
                         workspace_id=ws_id,
                         provider=active_provider,
-                        endpoint=current_endpoint,
                     )
                     if ok:
                         st.success(f"✅ {msg}")

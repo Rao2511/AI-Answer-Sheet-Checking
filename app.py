@@ -54,21 +54,15 @@ def init_session_state():
                 pass
         st.session_state['gemini_api_key'] = g_key
 
-    if 'ollama_endpoint' not in st.session_state:
-        st.session_state['ollama_endpoint'] = os.getenv("OLLAMA_ENDPOINT", "http://127.0.0.1:11434")
-
     # Active API key and selected model based on active provider
-    if st.session_state['ai_provider'] == 'Local Offline (Ollama)':
-        st.session_state['api_key'] = 'local'
-        if 'selected_model' not in st.session_state or any(k in st.session_state.get('selected_model', '') for k in ['claude', 'gemini']):
-            st.session_state['selected_model'] = 'qwen2.5-vl:7b'
-    elif st.session_state['ai_provider'] == 'Google Gemini':
+    if st.session_state['ai_provider'] == 'Google Gemini':
         st.session_state['api_key'] = st.session_state.get('gemini_api_key', '')
-        if 'selected_model' not in st.session_state or 'claude' in st.session_state.get('selected_model', '') or 'qwen' in st.session_state.get('selected_model', ''):
+        if 'selected_model' not in st.session_state or 'claude' in st.session_state.get('selected_model', ''):
             st.session_state['selected_model'] = 'gemini-2.5-flash'
     else:
+        st.session_state['ai_provider'] = 'Anthropic Claude'
         st.session_state['api_key'] = st.session_state.get('claude_api_key', '')
-        if 'selected_model' not in st.session_state or 'gemini' in st.session_state.get('selected_model', '') or 'qwen' in st.session_state.get('selected_model', ''):
+        if 'selected_model' not in st.session_state or 'gemini' in st.session_state.get('selected_model', ''):
             st.session_state['selected_model'] = 'claude-sonnet-5-5'
 
     if 'session_id' not in st.session_state:

@@ -16,8 +16,6 @@ def render_grading_page():
     rubric = st.session_state.get("parsed_rubric")
     api_key = st.session_state.get("api_key", "")
     provider = st.session_state.get("ai_provider", "Anthropic Claude")
-    endpoint = st.session_state.get("ollama_endpoint", "http://127.0.0.1:11434")
-    is_local = "Local" in provider or "Ollama" in provider or api_key == "local"
 
     if not pdfs:
         st.warning("📄 No answer sheets uploaded. Go to **Upload** page first.")
@@ -25,8 +23,8 @@ def render_grading_page():
     if not rubric or not hasattr(rubric, "questions"):
         st.warning("📋 No rubric parsed. Go to **Upload** page and parse your rubric first.")
         return
-    if not is_local and not api_key:
-        st.warning("🔑 Please enter your API Key in the sidebar.")
+    if not api_key:
+        st.warning("🔑 Please enter your AI API Key in the sidebar.")
         return
 
     ws_id = st.session_state.get("workspace_id", "")
@@ -35,10 +33,8 @@ def render_grading_page():
     questions_sum = sum(float(q.max_marks) for q in rubric.questions)
     current_total = float(rubric.total_marks if (rubric.total_marks and rubric.total_marks > 0) else questions_sum)
 
-    from core.ai_client import is_claude_key, is_local_provider
-    if is_local:
-        default_m = "qwen2.5-vl:7b"
-    elif is_claude_key(api_key, provider):
+    from core.ai_client import is_claude_key
+    if is_claude_key(api_key, provider):
         default_m = "claude-sonnet-5-5"
     else:
         default_m = "gemini-2.5-flash"
@@ -149,12 +145,11 @@ def render_grading_page():
                 result = grade_student_exam(
                     page_images=page_images,
                     rubric=rubric,
-                    api_key=api_key or "local",
+                    api_key=api_key,
                     model_name=selected_model_name,
                     workspace_id=ws_id,
                     exam_total_marks=configured_total,
                     provider=provider,
-                    endpoint=endpoint,
                 )
 
                 # Set student name from filename if AI didn't detect one
